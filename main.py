@@ -5,7 +5,7 @@ Created on Mon May 30 13:43:26 2022
 
 @author: barbereaup
 """
-EPOCHS = 1
+EPOCHS = 100
 batch_size = 8
 
 import inspect
@@ -57,7 +57,7 @@ test1200 = data1200[int(len(data1200)*0.8)+1:]
 
 # initialize the model
 print("[INFO] initializing the LeNet model...")
-model = rnn.Unet_AE_meteo()
+model = rnn.Unet_AE_meteo2()
 #orthogonal_(model.weight.data)
 if torch.cuda.is_available():
     model.cuda()
