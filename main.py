@@ -5,8 +5,8 @@ Created on Mon May 30 13:43:26 2022
 
 @author: barbereaup
 """
-EPOCHS = 100
-batch_size = 8
+EPOCHS = 30
+batch_size = 32
 
 import inspect
 import os
@@ -56,8 +56,8 @@ test1200 = data1200[int(len(data1200)*0.8)+1:]
 
 
 # initialize the model
-print("[INFO] initializing the LeNet model...")
-model = rnn.Unet_AE_meteo2()
+print("[INFO] initializing the model...")
+model = rnn.Unet_AE_meteo()
 #orthogonal_(model.weight.data)
 if torch.cuda.is_available():
     model.cuda()
@@ -133,7 +133,7 @@ if save == 'y':
     name_list_test = name_list_test[int(len(name_list_test)*0.8)+1:]
     for array,name in zip(predict_test_visu,name_list_test):
         dv.visualisation(array,show=False)
-        plt.savefig(f"%s/%s-predicted.png" %(dir_name,name))
+        plt.savefig(f"%s/%s_predicted.png" %(dir_name,name))
         plt.close()
     print("images saved in directory : ",dir_name)
     

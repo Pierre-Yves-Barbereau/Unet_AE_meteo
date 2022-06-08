@@ -9,6 +9,11 @@ Created on Mon May 30 16:35:24 2022
 
 import numpy as np
 import os
+from PIL import Image
+import torch
+import data_visualisation as dv
+import matplotlib.pyplot as plt
+import torch.nn as nn
 
 
 #name_list=os.listdir(path)
@@ -82,3 +87,115 @@ def fulldataload(variables):
         output500.append(data500)
         output1200.append(data1200)
     return np.asarray(output500),np.asarray(output1200),name_list_test
+
+def jpeg_load_meteo(path,var='temp850'):
+    #Temp850 only
+    name_list=os.listdir(path)
+    name_list.sort()
+    array_list=[]
+    original=[]
+    interp=[]
+    pred=[]
+    target=[]
+    output=[]
+    visu=[]
+    for name in name_list:
+        if name.split(".")[-1]=="png":
+            array_list.append(np.array(Image.open(f'%s/%s'%(path,name))))
+            splitname=name.split("_")
+            original.append(np.array(Image.open(f'../data1200/%s/%s.png'%(var,name.split("-")[0])))[:256,:256,:])
+#            print("torch.from_numpy(original[-1]).unsqueeze(0).float().permute(0,3,1,2).shape = ",\
+#                  torch.from_numpy(original[-1]).unsqueeze(0).float().permute(0,3,1,2).shape)
+            inter = torch.from_numpy(original[-1]).unsqueeze(0).float().permute(0,3,1,2)
+#            print (" inter 1 = ", inter.shape)
+            inter = nn.functional.interpolate(inter,scale_factor=2,mode='bicubic')
+#            print("inter2 = ",inter.shape)
+            inter = inter.permute(0,2,3,1).detach().numpy().astype(np.uint8)[0]
+#            print("inter.shape = ",inter.shape)
+            interp.append(inter)
+    for im in array_list:
+        pred.append(im[:512,:512,:])
+        target.append(im[:,512:,:])
+#    print("original[0].shape = ",original[0].shape)
+#    print("interp[0].shape = ",interp[0].shape)
+#    print("pred[0].shape = ",pred[0].shape)
+#    print("target[0].shape = ",target[0].shape)
+    for o,i,p,t in zip(original,interp,pred,target):
+        origin_rescaled=np.zeros((512,512,3))
+        origin_rescaled[128:384,128:384,:]=o
+        output.append([origin_rescaled,i,p,t])
+    output = np.array(output).astype(np.uint8)
+    
+#    for im,name in zip(output,name_list):
+#        
+#        im=dv.visu(im)
+#        visu.append(im)
+##        print("im.shape = ",im.shape)
+#        im=Image.fromarray(im,mode="RGB")
+#
+#        im.save(f'%s/%s-visu.png'%(path,name.split(".")[0].split("-")[0]))
+    
+    return output
+
+
+def jpeg_load_images(path):
+    name_list=os.listdir(path)
+    name_list.sort()
+    array_list=[]
+    original=[]
+    interp=[]
+    pred=[]
+    target=[]
+    output=[]
+    visu=[]
+    for name in name_list:
+        if name.split(".")[-1]=="jpeg":
+            array_list.append(np.array(Image.open(f'%s/%s'%(path,name))))
+            original.append(np.array(Image.open(f'../DIV2K_train_LR_unknown/X2/%sx2.png'%(name.split("-")[0])))[:256,:256,:])
+#            print("torch.from_numpy(original[-1]).unsqueeze(0).float().permute(0,3,1,2).shape = ",\
+#                  torch.from_numpy(original[-1]).unsqueeze(0).float().permute(0,3,1,2).shape)
+            inter = torch.from_numpy(original[-1]).unsqueeze(0).float().permute(0,3,1,2)
+#            print (" inter 1 = ", inter.shape)
+            inter = nn.functional.interpolate(inter,scale_factor=2,mode='bicubic')
+#            print("inter2 = ",inter.shape)
+            inter = inter.permute(0,2,3,1).detach().numpy().astype(np.uint8)[0]
+#            print("inter.shape = ",inter.shape)
+            interp.append(inter)
+    for im in array_list:
+        pred.append(im[:512,:512,:])
+        target.append(im[:,512:,:])
+#    print("original[0].shape = ",original[0].shape)
+#    print("interp[0].shape = ",interp[0].shape)
+#    print("pred[0].shape = ",pred[0].shape)
+#    print("target[0].shape = ",target[0].shape)
+    for o,i,p,t in zip(original,interp,pred,target):
+        origin_rescaled=np.zeros((512,512,3))
+        origin_rescaled[128:384,128:384,:]=o
+        output.append([origin_rescaled,i,p,t])
+    output = np.array(output).astype(np.uint8)
+#    for im,name in zip(output,name_list):
+#        
+#        im=dv.visu(im)
+#        visu.append(im)
+##        print("im.shape = ",im.shape)
+#        im=Image.fromarray(im,mode="RGB")
+#
+#        im.save(f'%s/%s-visu.png'%(path,name.split(".")[0].split("-")[0]))
+    
+    return output
+    
+
+    
+#listdir=os.listdir("../unet_ae_perso")
+#listdir.sort()
+#for rep in listdir:
+#    print(rep)
+#    if rep.split("_")[0]=="predict":
+#        jpeg_load2(f"../unet_ae_perso/%s"%rep)
+#    
+    
+
+        
+    
+    
+    

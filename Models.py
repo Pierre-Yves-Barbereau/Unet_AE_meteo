@@ -86,21 +86,21 @@ class Unet_AE_meteo(nn.Module):
        
     def forward(self, x):
 
-        d0 = self.lrelu(self.conv56_28(self.pad(self.convin_56(self.pad(nn.functional.interpolate(x,size=(214,267),mode='bicubic'))))))
+        d0 = self.bn28(self.lrelu(self.conv56_28(self.pad(self.bn56(self.lrelu(self.convin_56(self.pad(nn.functional.interpolate(x,size=(214,267),mode='bicubic')))))))))
 #        d0 = nn.functional.pad(d0, (1,1,0,0), mode='replicate')
 #        dm1 = self.lrelu(self.conv28_14(self.pad(self.conv28_28(self.pad(nn.functional.interpolate(d0,size=(107,133),mode='bicubic'))))))
 #
 #        dm2 = self.lrelu(self.conv14_7(self.pad(self.conv14_14(self.pad(nn.functional.interpolate(dm1,size=(214,267),mode='bicubic'))))))
 
-        d1 = self.lrelu(self.bn56(self.conv56_56(self.pad(self.bn56(self.convin_56bis(self.pad(x)))))))
+        d1 = self.bn56(self.lrelu(self.conv56_56(self.pad(self.bn56(self.lrelu(self.convin_56bis(self.pad(x))))))))
         d1 = nn.functional.pad(d1, (0,1,0,0), mode='replicate')
 
         d2 = nn.functional.pad(d1, (0,1,0,1), mode='replicate')
-        d2 = self.lrelu(self.bn112(self.conv56_112(self.pad(self.maxpool2(d2)))))
+        d2 = self.bn112(self.lrelu(self.conv56_112(self.pad(self.maxpool2(d2)))))
         d2 = d2[:,:,:,:27]
 
 
-        d3 = self.lrelu(self.bn224(self.conv112_224(self.pad(self.maxpool2(d2)))))
+        d3 = self.bn224(self.lrelu(self.conv112_224(self.pad(self.maxpool2(d2)))))
 
 #        d4 = self.lrelu(self.conv224_448(self.pad(self.maxpool2(d3))))
 #        print("d4.shape = ",d4.shape)
@@ -125,25 +125,25 @@ class Unet_AE_meteo(nn.Module):
 #        x = self.lrelu(self.conv448_224bis(self.pad(x)))
 #        
         x = nn.functional.interpolate(d3,scale_factor=2,mode='bicubic')
-        x = self.lrelu(self.bn112(self.conv224_112(self.pad(x))))
+        x = self.bn112(self.lrelu(self.conv224_112(self.pad(x))))
         
         x = nn.functional.pad(x, (1,0,1,0), mode='replicate')
         x = x[:,:,:,:27]
 #        print("x.shape = ",x.shape)
         x = torch.cat((d2,x),dim=1)
-        x = self.lrelu(self.bn112(self.conv224_112bis(self.pad(x))))
+        x = self.bn112(self.lrelu(self.conv224_112bis(self.pad(x))))
 
         x = nn.functional.interpolate(x,scale_factor=2,mode='bicubic')
-        x = self.lrelu(self.bn56(self.conv112_56(self.pad(x))))
+        x = self.bn56(self.lrelu(self.conv112_56(self.pad(x))))
 #        print("x.shape = ",x.shape)
         x = torch.cat((d1,x),dim=1)
-        x = self.lrelu(self.bn56(self.conv112_56bis(self.pad(x))))
+        x = self.bn56(self.lrelu(self.conv112_56bis(self.pad(x))))
         
         x = nn.functional.interpolate(x,size=(214,267),mode='bicubic')
-        x = self.lrelu(self.bn28(self.conv56_28(self.pad(x))))
+        x = self.bn28(self.lrelu(self.conv56_28(self.pad(x))))
         
         x = torch.cat((d0,x),dim=1)
-        x = self.lrelu(self.bnout(self.conv56_out(self.pad(self.lrelu(self.bn56(self.conv56_56bis(self.pad(x))))))))
+        x = self.bnout(self.lrelu(self.conv56_out(self.pad(self.bn56(self.lrelu(self.conv56_56bis(self.pad(x))))))))
         
         
         return x
