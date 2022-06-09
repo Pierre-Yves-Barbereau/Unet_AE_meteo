@@ -185,13 +185,7 @@ def jpeg_load_images(path):
     return output
     
 
-    
-#listdir=os.listdir("../unet_ae_perso")
-#listdir.sort()
-#for rep in listdir:
-#    print(rep)
-#    if rep.split("_")[0]=="predict":
-#        jpeg_load2(f"../unet_ae_perso/%s"%rep)
+
 #    
     
 

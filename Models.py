@@ -13,6 +13,7 @@ import torch
 import numpy as np
 from torch.optim import Adam
 import time
+from PIL import Image
 # set the device we will be using to train the model
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -91,14 +92,14 @@ class Unet_AE_meteo(nn.Module):
 #        dm1 = self.lrelu(self.conv28_14(self.pad(self.conv28_28(self.pad(nn.functional.interpolate(d0,size=(107,133),mode='bicubic'))))))
 #
 #        dm2 = self.lrelu(self.conv14_7(self.pad(self.conv14_14(self.pad(nn.functional.interpolate(dm1,size=(214,267),mode='bicubic'))))))
-
+        
+#        d1 = self.bn56(self.lrelu(self.conv28_56(self.pad(self.maxpool2(d0)))))
         d1 = self.bn56(self.lrelu(self.conv56_56(self.pad(self.bn56(self.lrelu(self.convin_56bis(self.pad(x))))))))
         d1 = nn.functional.pad(d1, (0,1,0,0), mode='replicate')
 
         d2 = nn.functional.pad(d1, (0,1,0,1), mode='replicate')
         d2 = self.bn112(self.lrelu(self.conv56_112(self.pad(self.maxpool2(d2)))))
         d2 = d2[:,:,:,:27]
-
 
         d3 = self.bn224(self.lrelu(self.conv112_224(self.pad(self.maxpool2(d2)))))
 
@@ -120,7 +121,6 @@ class Unet_AE_meteo(nn.Module):
 #        x = nn.functional.interpolate(d4,scale_factor=2,mode='bicubic')
 #        x = self.lrelu(self.conv448_224(self.pad(x)))
 #        x = nn.functional.pad(x, (1,0,0,0), mode='replicate')
-        
 #        x = torch.cat((d3,x),dim=1)
 #        x = self.lrelu(self.conv448_224bis(self.pad(x)))
 #        
@@ -153,7 +153,7 @@ class Unet_AE_meteo(nn.Module):
     
     def fit(self, train_input_batch,train_output_batch,test_input_batch,test_output_batch, EPOCHS,batch_size=16,mode='normal'):
         startTime = time.time()
-        lr = batch_size*1e-4
+        lr = batch_size*1e-3
         opt = Adam(self.parameters(), lr=lr)
         scheduler = torch.optim.lr_scheduler.ExponentialLR(opt, gamma=0.5)
         train_loss_list = []
@@ -250,7 +250,7 @@ class Unet_AE_meteo(nn.Module):
                 ssim_test = -self.ssim(pred_test,test_target)
                 mge_test = self.MGE_loss(pred_test,test_target)
                 lap_test = self.Laplacian(pred_test,test_target)
-                test_loss = 0.1*mge_test + 0.1 * ssim_test + MAE_test + 0.1
+                test_loss = 0.1*mge_test + 0.1 * ssim_test + 0.1*lap_test + MAE_test + 0.1
                 test_loss_list.append(test_loss.item())
                 MAE_test_loss_list.append(MAE_test.item())
                 
@@ -284,7 +284,7 @@ class Unet_AE_meteo(nn.Module):
             interp=(nn.functional.interpolate(im_input,size=(214,267),mode='bicubic')[0].permute(1,2,0).detach().numpy()*rescale)[:,:,0]
             im_input=(im_input[0].permute(1,2,0).detach().numpy()*rescale)[:,:,0]            
             
-            pred_list.append(pred)
+            pred_list.append(pred.astype(np.uint8))
             im_output=(im_output.permute(1,2,0).detach().numpy()*rescale)[:,:,0]
             visu_list.append([im_input,interp,pred,im_output])
             #saving image

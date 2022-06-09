@@ -6,7 +6,7 @@ Created on Mon May 30 13:43:26 2022
 @author: barbereaup
 """
 EPOCHS = 30
-batch_size = 32
+batch_size = 16
 
 import inspect
 import os
@@ -113,8 +113,9 @@ print("loss_test_mean_100 = ",MAE_test_mean_100)
 
 
 dv.visualisation(predict_test_visu[0])
-save = input("Save results ?")
 
+
+save = input("Save results ?")
 if save == 'y':
 
     cl=inspect.getsource(rnn.Unet_AE_meteo)
@@ -133,7 +134,7 @@ if save == 'y':
     name_list_test = name_list_test[int(len(name_list_test)*0.8)+1:]
     for array,name in zip(predict_test_visu,name_list_test):
         dv.visualisation(array,show=False)
-        plt.savefig(f"%s/%s_predicted.png" %(dir_name,name))
+        plt.savefig(f"%s/%s_predicted.png" %(dir_name,name),dpi=300)
         plt.close()
     print("images saved in directory : ",dir_name)
     
