@@ -19,6 +19,7 @@ import torch.nn as nn
 #name_list=os.listdir(path)
 def dataload(path500,path1200):
     name_list=os.listdir(path500)
+    name_list.sort()
     output500=[]
     output1200=[]
     name_list_test=[]
@@ -88,6 +89,28 @@ def fulldataload(variables):
         output1200.append(data1200)
     return np.asarray(output500),np.asarray(output1200),name_list_test
 
+def train_test_split(X,Y,name_list):
+    X_train = []
+    X_test = []
+    Y_train = []
+    Y_test = []
+    name_list_test=[]
+    i=0
+    for x,y,name in zip(X,Y,name_list):
+        if 0<=i<20:
+            X_train.append(x)
+            Y_train.append(y)
+        if 21<=i<=25:
+            X_test.append(x)
+            Y_test.append(y)
+            name_list_test.append(name)
+        if i == 26:
+            i=-1
+        i+=1
+    return np.asarray(X_train),np.asarray(X_test),np.asarray(Y_train),np.asarray(Y_test),name_list_test
+        
+    
+
 def jpeg_load_meteo(path,var='temp850'):
     #Temp850 only
     name_list=os.listdir(path)
@@ -147,7 +170,7 @@ def jpeg_load_images(path):
     pred=[]
     target=[]
     output=[]
-    visu=[]
+
     for name in name_list:
         if name.split(".")[-1]=="jpeg":
             array_list.append(np.array(Image.open(f'%s/%s'%(path,name))))

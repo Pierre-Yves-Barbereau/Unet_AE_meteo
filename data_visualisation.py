@@ -27,9 +27,9 @@ def visualisation(array,bar=True,show=True):
     if bar:
         grid = ImageGrid(fig, 142,  # similar to subplot(142)
                          nrows_ncols=(2, 2),
-                         axes_pad=0.5,
+                         axes_pad=0.3,
     #                     share_all=True,
-                         cbar_mode="each",
+                         cbar_mode="single",
                          cbar_location="right",
     #                     label_mode = "all",
                          )
@@ -43,7 +43,7 @@ def visualisation(array,bar=True,show=True):
     #                     label_mode = "all",
                          )
     extent= (-3, 4, -4, 3)
-    title=["original","interpolation bicubique","prediction","target"]
+    title=["Original","Bicubic interpolation","Prediction","Target"]
     for i, ax, im in zip(range(4),grid, [array[0], array[1], array[2], array[3]]):
     # Iterating over the grid returns the Axes.
         im0 = ax.imshow(im,extent=extent)
@@ -61,6 +61,7 @@ def visualisation(array,bar=True,show=True):
     if show:
         plt.show()
         plt.close()
+    return fig
     
             
 def visualisation2(array,bar=True,show=True):

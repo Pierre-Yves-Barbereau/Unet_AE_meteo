@@ -11,9 +11,7 @@ import random
 import torch.nn as nn
 import torch
 import numpy as np
-from torch.optim import Adam
 import time
-from PIL import Image
 # set the device we will be using to train the model
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -25,125 +23,54 @@ class Unet_AE_meteo(nn.Module):
         self.output_channels=1
         #V1
         self.bnout = nn.BatchNorm2d(self.output_channels)
-        self.bn28 = nn.BatchNorm2d(28)
+        
         self.bn56 = nn.BatchNorm2d(56)
         self.bn112 = nn.BatchNorm2d(112)
         self.bn224 = nn.BatchNorm2d(224)
+        self.bn448 = nn.BatchNorm2d(448)
         self.pad = nn.ReplicationPad2d(1)
         self.convin_56 = nn.Conv2d(in_channels=self.input_channels, out_channels=56, kernel_size=3, stride=1,padding=0,bias=None)
         self.conv56_56 = nn.Conv2d(in_channels=56, out_channels=56, kernel_size=3, stride=1,padding=0,bias=None)
-        self.convin_56bis = nn.Conv2d(in_channels=self.input_channels, out_channels=56, kernel_size=3, stride=1,padding=0,bias=None)
-        self.conv14_14 = nn.Conv2d(in_channels=14, out_channels=14, kernel_size=3, stride=1,padding=0,bias=None)
-        self.conv28_28 = nn.Conv2d(in_channels=28, out_channels=28, kernel_size=3, stride=1,padding=0,bias=None)
         self.conv56_56bis = nn.Conv2d(in_channels=56, out_channels=56, kernel_size=3, stride=1,padding=0,bias=None)
         self.conv56_112 = nn.Conv2d(in_channels=56, out_channels=112, kernel_size=3, stride=1,padding=0,bias=None)
         self.conv112_224 = nn.Conv2d(in_channels=112, out_channels=224, kernel_size=3, stride=1,padding=0,bias=None)
         self.conv224_448 = nn.Conv2d(in_channels=224, out_channels=448, kernel_size=3, stride=1,padding=0,bias=None)
-        
-        self.conv224_224 = nn.Conv2d(in_channels=224, out_channels=224, kernel_size=3, stride=1,padding=0,bias=None)
-        
-        self.conv112_112 = nn.Conv2d(in_channels=112, out_channels=112, kernel_size=3, stride=1,padding=0,bias=None)
-        
-        self.conv56_3 = nn.Conv2d(in_channels=56, out_channels=3, kernel_size=3, stride=1,padding=0,bias=None)
-        self.lrelu = nn.LeakyReLU(0.1)
-        self.maxpool2 = nn.MaxPool2d((2,2),2)
-        
-         #V2
-        self.conv448_896 = nn.Conv2d(in_channels=448, out_channels=896, kernel_size=3, stride=1,padding=0,bias=None)
-        self.conv896_1792 = nn.Conv2d(in_channels=896, out_channels=1792, kernel_size=3, stride=1,padding=0,bias=None)
-        self.conv1792_896 = nn.Conv2d(in_channels=1792, out_channels=896, kernel_size=3, stride=1,padding=0,bias=None)
-        self.conv1792_896bis = nn.Conv2d(in_channels=1792, out_channels=896, kernel_size=3, stride=1,padding=0,bias=None)
-        self.conv896_448 = nn.Conv2d(in_channels=896, out_channels=448, kernel_size=3, stride=1,padding=0,bias=None)
-        self.conv896_448bis = nn.Conv2d(in_channels=896, out_channels=448, kernel_size=3, stride=1,padding=0,bias=None)
         self.conv448_224 = nn.Conv2d(in_channels=448, out_channels=224, kernel_size=3, stride=1,padding=0,bias=None)
         self.conv448_224bis = nn.Conv2d(in_channels=448, out_channels=224, kernel_size=3, stride=1,padding=0,bias=None)
         self.conv224_112 = nn.Conv2d(in_channels=224, out_channels=112, kernel_size=3, stride=1,padding=0,bias=None)
         self.conv224_112bis = nn.Conv2d(in_channels=224, out_channels=112, kernel_size=3, stride=1,padding=0,bias=None)
         self.conv112_56 = nn.Conv2d(in_channels=112, out_channels=56, kernel_size=3, stride=1,padding=0,bias=None)
         self.conv112_56bis = nn.Conv2d(in_channels=112, out_channels=56, kernel_size=3, stride=1,padding=0,bias=None)
-        self.conv112_56ter = nn.Conv2d(in_channels=112, out_channels=56, kernel_size=3, stride=1,padding=0,bias=None)
-        self.conv56_28 = nn.Conv2d(in_channels=56, out_channels=28, kernel_size=3, stride=1,padding=0,bias=None)
-        self.conv56_28bis = nn.Conv2d(in_channels=56, out_channels=28, kernel_size=3, stride=1,padding=0,bias=None)
-        self.conv28_14 = nn.Conv2d(in_channels=28, out_channels=14, kernel_size=3, stride=1,padding=0,bias=None)
-        self.conv28_14bis = nn.Conv2d(in_channels=28, out_channels=14, kernel_size=3, stride=1,padding=0,bias=None)
-        self.conv14_14 = nn.Conv2d(in_channels=14, out_channels=14, kernel_size=3, stride=1,padding=0,bias=None)
-        self.conv14_14bis = nn.Conv2d(in_channels=14, out_channels=14, kernel_size=3, stride=1,padding=0,bias=None)
-        self.conv14_14ter = nn.Conv2d(in_channels=14, out_channels=14, kernel_size=3, stride=1,padding=0,bias=None)
-        self.conv14_7 = nn.Conv2d(in_channels=14, out_channels=7, kernel_size=3, stride=1,padding=0,bias=None)
-        self.conv14_7bis = nn.Conv2d(in_channels=14, out_channels=7, kernel_size=3, stride=1,padding=0,bias=None)
+        
+        self.lrelu = nn.LeakyReLU(0.1)
+        self.maxpool2 = nn.MaxPool2d((2,2),2)
         self.conv56_out = nn.Conv2d(in_channels=56, out_channels=self.output_channels, kernel_size=3, stride=1,padding=0,bias=None)
-#        self.conv1792_3584 = nn.Conv2d(in_channels=1792, out_channels=3584, kernel_size=3, stride=1,padding=0,bias=None)
-        
-      
-        
-#        self.conv3584_1792 = nn.Conv2d(in_channels=3584, out_channels=1792, kernel_size=3, stride=1,padding=0,bias=None)
-#        self.conv1792_896 = nn.Conv2d(in_channels=1792, out_channels=896, kernel_size=3, stride=1,padding=0,bias=None)
-#        self.conv896_448=nn.Conv2d(in_channels=896, out_channels=448, kernel_size=3, stride=1,padding=0,bias=None)
-        
-#        self.conv896_448=nn.Conv2d(in_channels=896, out_channels=448, kernel_size=3, stride=1,padding=0,bias=None)
-        
 
         
        
     def forward(self, x):
 
-        d0 = self.bn28(self.lrelu(self.conv56_28(self.pad(self.bn56(self.lrelu(self.convin_56(self.pad(nn.functional.interpolate(x,size=(214,267),mode='bicubic')))))))))
-#        d0 = nn.functional.pad(d0, (1,1,0,0), mode='replicate')
-#        dm1 = self.lrelu(self.conv28_14(self.pad(self.conv28_28(self.pad(nn.functional.interpolate(d0,size=(107,133),mode='bicubic'))))))
-#
-#        dm2 = self.lrelu(self.conv14_7(self.pad(self.conv14_14(self.pad(nn.functional.interpolate(dm1,size=(214,267),mode='bicubic'))))))
-        
-#        d1 = self.bn56(self.lrelu(self.conv28_56(self.pad(self.maxpool2(d0)))))
-        d1 = self.bn56(self.lrelu(self.conv56_56(self.pad(self.bn56(self.lrelu(self.convin_56bis(self.pad(x))))))))
-        d1 = nn.functional.pad(d1, (0,1,0,0), mode='replicate')
+        d0 = self.bn56(self.lrelu(self.conv56_56(self.pad(self.bn56(self.lrelu(self.convin_56(self.pad(nn.functional.interpolate(x,size=(214,267),mode='bicubic')))))))))
+        d1 = self.bn112(self.lrelu(self.conv56_112(self.pad(self.maxpool2(d0)))))
+        d2 = self.bn224(self.lrelu(self.conv112_224(self.pad(self.maxpool2(d1)))))
+        d3 = self.bn448(self.lrelu(self.conv224_448(self.pad(self.maxpool2(d2)))))
 
-        d2 = nn.functional.pad(d1, (0,1,0,1), mode='replicate')
-        d2 = self.bn112(self.lrelu(self.conv56_112(self.pad(self.maxpool2(d2)))))
-        d2 = d2[:,:,:,:27]
-
-        d3 = self.bn224(self.lrelu(self.conv112_224(self.pad(self.maxpool2(d2)))))
-
-#        d4 = self.lrelu(self.conv224_448(self.pad(self.maxpool2(d3))))
-#        print("d4.shape = ",d4.shape)
-#        d5 = self.lrelu(self.conv448_896(self.pad(self.maxpool2(d4))))
-#        d6 = self.lrelu(self.conv896_1792(self.pad(self.maxpool2(d5))))
-#        
-#        x = nn.functional.interpolate(d6,scale_factor=2,mode='bicubic')
-#        x = self.lrelu(self.conv1792_896(self.pad(x)))
-#        x = torch.cat((d5,x),dim=1)
-#        x = self.lrelu(self.conv1792_896bis(self.pad(x)))
-#        
-#        x = nn.functional.interpolate(x,scale_factor=2,mode='bicubic')
-#        x = self.lrelu(self.conv896_448(self.pad(x)))
-#        x = torch.cat((d4,x),dim=1)
-#        x = self.lrelu(self.conv896_448bis(self.pad(x)))
-        
-#        x = nn.functional.interpolate(d4,scale_factor=2,mode='bicubic')
-#        x = self.lrelu(self.conv448_224(self.pad(x)))
-#        x = nn.functional.pad(x, (1,0,0,0), mode='replicate')
-#        x = torch.cat((d3,x),dim=1)
-#        x = self.lrelu(self.conv448_224bis(self.pad(x)))
-#        
         x = nn.functional.interpolate(d3,scale_factor=2,mode='bicubic')
-        x = self.bn112(self.lrelu(self.conv224_112(self.pad(x))))
-        
-        x = nn.functional.pad(x, (1,0,1,0), mode='replicate')
-        x = x[:,:,:,:27]
-#        print("x.shape = ",x.shape)
+        x = self.bn224(self.lrelu(self.conv448_224(self.pad(x))))
+        x = nn.functional.pad(x, (0,0,0,1), mode='replicate')
         x = torch.cat((d2,x),dim=1)
-        x = self.bn112(self.lrelu(self.conv224_112bis(self.pad(x))))
+        x = self.bn224(self.lrelu(self.conv448_224bis(self.pad(x))))
 
         x = nn.functional.interpolate(x,scale_factor=2,mode='bicubic')
-        x = self.bn56(self.lrelu(self.conv112_56(self.pad(x))))
-#        print("x.shape = ",x.shape)
+        x = self.bn112(self.lrelu(self.conv224_112(self.pad(x))))
+        x = nn.functional.pad(x, (1,0,1,0), mode='replicate')
         x = torch.cat((d1,x),dim=1)
-        x = self.bn56(self.lrelu(self.conv112_56bis(self.pad(x))))
+        x = self.bn112(self.lrelu(self.conv224_112bis(self.pad(x))))
         
         x = nn.functional.interpolate(x,size=(214,267),mode='bicubic')
-        x = self.bn28(self.lrelu(self.conv56_28(self.pad(x))))
-        
+        x = self.bn56(self.lrelu(self.conv112_56(self.pad(x))))
         x = torch.cat((d0,x),dim=1)
-        x = self.bnout(self.lrelu(self.conv56_out(self.pad(self.bn56(self.lrelu(self.conv56_56bis(self.pad(x))))))))
+        x = self.bnout(self.lrelu(self.conv56_out(self.pad(self.bn56(self.lrelu(self.conv112_56bis(self.pad(x))))))))
         
         
         return x
@@ -151,14 +78,12 @@ class Unet_AE_meteo(nn.Module):
 
 
     
-    def fit(self, train_input_batch,train_output_batch,test_input_batch,test_output_batch, EPOCHS,batch_size=16,mode='normal'):
+    def fit(self, train_input_batch,train_output_batch,test_input_batch,test_output_batch, EPOCHS,opt,gamma,sheduler_period,batch_size=16):
         startTime = time.time()
-        lr = batch_size*1e-3
-        opt = Adam(self.parameters(), lr=lr)
-        scheduler = torch.optim.lr_scheduler.ExponentialLR(opt, gamma=0.5)
+        scheduler = torch.optim.lr_scheduler.ExponentialLR(opt, gamma=gamma)
         train_loss_list = []
         test_loss_list = []
-        MAE_test_loss_list = []
+#        MAE_test_loss_list = []
         
         #Training loop
         for e in range(0, EPOCHS):
@@ -174,11 +99,9 @@ class Unet_AE_meteo(nn.Module):
             test_input_batch = test_input_batch[perm_test]
             test_output_batch = test_output_batch[perm_test]
             
-#            if e==30:
-#                opt=SGD(self.parameters(), lr=1e-4)
-#                scheduler = torch.optim.lr_scheduler.ExponentialLR(opt, gamma=0.9)
+#           
             
-            if e%5==0:
+            if e%sheduler_period==0:
                 scheduler.step()
             
             #bath size split
@@ -189,21 +112,21 @@ class Unet_AE_meteo(nn.Module):
                 n=n+1
                 
                 pred = self.forward(x.cuda())
-                print("pred.shape = ",pred.shape)
-                print("y.shape = ",y.shape)
+#                print("pred.shape = ",pred.shape)
+#                print("y.shape = ",y.shape)
                 
                 #ùetrics
                
-                MAE_train = torch.abs((y.cuda()-pred)).mean()
-                #
-                ssim_train = -self.ssim(pred,y.cuda())
-                
-                mge_train = self.MGE_loss(pred,y.cuda())
-                
-                lap = self.Laplacian(pred,y)
-                
-                loss = 0.1*mge_train + 0.1*ssim_train + 0.1*lap + MAE_train + 0.1
-                
+#                MAE_train = torch.abs((y.cuda()-pred)).mean()
+#                #
+#                ssim_train = -self.ssim(pred,y.cuda())
+#                
+#                mge_train = self.MGE_loss(pred,y.cuda())
+#                
+#                lap = self.Laplacian(pred,y)
+#                
+#                loss = 0.1*mge_train + 0.1*ssim_train + 0.1*lap + MAE_train + 0.1
+                loss =((y.cuda()-pred)**2).mean()
                 opt.zero_grad()
                 loss.backward()
                 opt.step()
@@ -246,26 +169,27 @@ class Unet_AE_meteo(nn.Module):
                 with torch.no_grad():
                     pred_test = self.forward(test_input_batch.split(batch_size)[randint].cuda())
                 test_target = test_output_batch.split(batch_size)[randint].cuda()
-                MAE_test = torch.abs((test_target-pred_test)).mean()
-                ssim_test = -self.ssim(pred_test,test_target)
-                mge_test = self.MGE_loss(pred_test,test_target)
-                lap_test = self.Laplacian(pred_test,test_target)
-                test_loss = 0.1*mge_test + 0.1 * ssim_test + 0.1*lap_test + MAE_test + 0.1
+#                MAE_test = torch.abs((test_target-pred_test)).mean()
+#                ssim_test = -self.ssim(pred_test,test_target)
+#                mge_test = self.MGE_loss(pred_test,test_target)
+#                lap_test = self.Laplacian(pred_test,test_target)
+                test_loss=((pred_test-test_target)**2).mean()
+#                test_loss = 0.1*mge_test + 0.1 * ssim_test + 0.1*lap_test + MAE_test + 0.1
                 test_loss_list.append(test_loss.item())
-                MAE_test_loss_list.append(MAE_test.item())
+#                MAE_test_loss_list.append(MAE_test.item())
                 
                 endTime = time.time()
                 Time=endTime-startTime
-                print("\n Training : time elapsed = ",Time," \n epoch = ",e,"/",EPOCHS, " nbatch = ",n,"/",nmax) 
-                print("loss train =",loss.item())
-                print("MGE train= ",mge_train.item())
-                print("MSE train= ",MAE_train.item())
-                print("loss test  =",test_loss.item())
-                print("MGE test= ",mge_test.item())
-                print("MSE test= ",MAE_test.item())
+                print("\nTraining : time elapsed = ",Time,"/",(Time/(e*nmax+n))*EPOCHS*nmax,"\nEpoch = ",e,"/",EPOCHS, " nbatch = ",n,"/",nmax)
+                print("Loss train =",loss.item())
+#                print("MGE train= ",mge_train.item())
+#                print("MSE train= ",MAE_train.item())
+#                print("loss test  =",test_loss.item())
+#                print("MGE test= ",mge_test.item())
+#                print("MSE test= ",MAE_test.item())
                
                
-        return train_loss_list,test_loss_list,MAE_test_loss_list
+        return train_loss_list,test_loss_list
     
     def predict(self,input_batch,output_batch,rescale):
         
@@ -370,10 +294,6 @@ class Unet_AE_meteo(nn.Module):
     
     def MGE_loss(self,pred,target):
         output_channels=self.output_channels
-    #    x_filter = torch.tensor([[-1,0,1],[-2,0,2],[-1,0,1]]).unsqueeze(0).repeat(batch_size,3,1,1).float().cuda()
-    #    y_filter = torch.tensor([[-1,-2,-1],[0,0,0],[1,2,1]]).unsqueeze(0).repeat(1,3,1,1).float().cuda()
-    #    x_filter = torch.Tensor([[[[-1, 0, 1], [-2, 1, 2], [-1, 0, 1]]]]).cuda()
-    #    y_filter = torch.Tensor([[[[-1,-2,-1]], [[0,0,0]], [[1,2,1]]]]).cuda()
         x_filter = torch.Tensor([[[[-1, 0, 1], [-2, 1, 2], [-1, 0, 1]]]]).repeat(1,output_channels,1,1).cuda()
         y_filter = torch.Tensor([[[[-1,-2,-1], [0,0,0], [1,2,1]]]]).repeat(1,output_channels,1,1).cuda()
         pad = nn.ReplicationPad2d(1)
@@ -513,11 +433,10 @@ class Unet_AE_meteo2(nn.Module):
 
 
     
-    def fit(self, train_input_batch,train_output_batch,test_input_batch,test_output_batch, EPOCHS,batch_size=16,mode='normal'):
+    def fit(self, train_input_batch,train_output_batch,test_input_batch,test_output_batch, EPOCHS,opt,gamma,batch_size=16):
         startTime = time.time()
-        lr = batch_size*1e-4
-        opt = Adam(self.parameters(), lr=lr)
-        scheduler = torch.optim.lr_scheduler.ExponentialLR(opt, gamma=0.5)
+        
+        scheduler = torch.optim.lr_scheduler.ExponentialLR(opt, gamma=gamma)
         train_loss_list = []
         test_loss_list = []
         MAE_test_loss_list = []
@@ -627,7 +546,7 @@ class Unet_AE_meteo2(nn.Module):
                 print("MSE test= ",MAE_test.item())
                
                
-        return train_loss_list,test_loss_list,MAE_test_loss_list
+        return train_loss_list,test_loss_list
     
     def predict(self,input_batch,output_batch,rescale):
         
